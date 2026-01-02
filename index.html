@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>稅務小豆腐 境外電商扣繳計算機</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #fdfaf0; /* 豆腐鵝黃底色 */
+        }
+        .tofu-card {
+            background-color: #ffffff;
+            border: 1px solid #f0e68c;
+        }
+        .tofu-header {
+            background-color: #f9f1a5; /* 小豆腐黃 */
+            color: #5d532d;
+        }
+        .tofu-accent {
+            background-color: #fff9db;
+        }
+        .tofu-btn {
+            background-color: #f7e178;
+            color: #5d532d;
+            transition: all 0.2s;
+        }
+        .tofu-btn:hover {
+            background-color: #f0d54f;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-2xl mx-auto tofu-card rounded-2xl shadow-lg overflow-hidden">
+        <!-- 標題區 -->
+        <div class="tofu-header p-6 border-b border-khaki-200">
+            <h1 class="text-2xl font-bold text-center">稅務小豆腐 境外電商扣繳計算機</h1>
+            <p class="text-sm text-center mt-2 opacity-80">自動計算給付總額&扣繳稅額&申報期限</p>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <!-- 輸入區 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">實際支付金額</label>
+                    <input type="number" id="netAmount" value="17500" class="w-full border-yellow-200 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500 border p-2" oninput="calculate()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">實際支付日</label>
+                    <input type="date" id="payDate" class="w-full border-yellow-200 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500 border p-2" onchange="calculate()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">核定淨利率 (%)</label>
+                    <input type="number" id="profitRate" value="30" class="w-full border-yellow-200 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500 border p-2" oninput="calculate()">
+                    <p class="text-[10px] text-gray-400 mt-1">*無核定比例請填 100</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">國內貢獻度 (%)</label>
+                    <input type="number" id="contributionRate" value="100" class="w-full border-yellow-200 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500 border p-2" oninput="calculate()">
+                    <p class="text-[10px] text-gray-400 mt-1">*無核定比例請填 100</p>
+                </div>
+            </div>
+
+            <!-- 說明文字 -->
+            <div class="tofu-accent p-4 rounded-lg text-sm text-gray-700 border border-yellow-100">
+                <p class="font-bold mb-1">📅 支付日判定提醒：</p>
+                <ul class="list-disc ml-5 space-y-1 text-xs">
+                    <li><strong>信用卡繳納：</strong>為「銀行扣款日」，而非刷卡日。</li>
+                    <li><strong>員工代繳：</strong>為「實際支付員工日」。</li>
+                </ul>
+            </div>
+
+            <!-- 計算結果 -->
+            <div class="bg-white rounded-xl p-6 border-2 border-dashed border-yellow-200">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 border-b border-yellow-100 pb-2 text-center">計算結果</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <p class="text-xs text-gray-500">扣繳率</p>
+                        <p id="taxRateRes" class="text-lg font-semibold text-gray-700">-- %</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs text-gray-500">給付總額</p>
+                        <p id="grossAmountRes" class="text-lg font-bold text-gray-900">NT$ 0</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs text-gray-500">應扣繳稅額 (10日內繳納)</p>
+                        <p id="taxAmountRes" class="text-lg font-bold text-red-600">NT$ 0</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs text-gray-500">申報截止期限 (含給付當日起算10日內)</p>
+                        <p id="deadlineRes" class="text-lg font-bold text-orange-600">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 備註與連結 -->
+            <div class="border-t border-yellow-100 pt-6">
+                <h3 class="font-bold text-gray-800 mb-3 flex items-center">
+                    <span class="bg-yellow-400 w-1 h-5 mr-2"></span> 稅務小豆腐提供實用連結給您參考:
+                </h3>
+                <div class="grid grid-cols-1 gap-3 mb-4">
+                    <a href="https://www.etax.nat.gov.tw/etwmain/etw144w/353C" target="_blank" class="tofu-btn flex items-center p-3 rounded-lg shadow-sm">
+                        <span class="text-sm font-medium"> 線上列印扣繳稅額繳款書 (353)</span>
+                    </a>
+                    <a href="https://www.etax.nat.gov.tw/etwmain/cbec-tax-area/profit-seeking-enterprise-income-tax/approve-net-interest-rate-inquiry" target="_blank" class="tofu-btn flex items-center p-3 rounded-lg shadow-sm">
+                        <span class="text-sm font-medium"> 查詢境外電商核定淨利率&利潤貢獻度</span>
+                    </a>
+                     <a href="https://www.etax.nat.gov.tw/etwmain/etw144w/408" target="_blank" class="tofu-btn flex items-center p-3 rounded-lg shadow-sm">
+                        <span class="text-sm font-medium"> 購買國外勞務營業稅繳款書(408)</span>
+                    </a>
+                    <a href="https://www.ntbt.gov.tw/singlehtml/41ae3594197f4f69b47753ce08188516?cntId=154b404429a74b60b77d7e71e1d25085" target="_blank" class="bg-white border border-orange-200 flex items-center p-3 rounded-lg shadow-sm hover:bg-orange-50 transition">
+                        <span class="text-sm font-medium text-orange-700">⚠️ 兼營營業人向境外電商購買電子勞務，應申報購買國外勞務並依規定報繳營業稅</span>
+                    </a>
+                </div>
+                
+                <div class="bg-orange-50 p-4 rounded-lg border border-orange-100">
+                    <p class="text-xs text-orange-800 leading-relaxed">
+                        <strong>重要營業稅提醒：</strong><br>
+                        1. <strong>兼營營業人(403)</strong>：須按「不得扣抵比例」計算營業稅，並於 403 申報書填寫「購買國外勞務」金額。<br>
+                        2. <strong>專營應稅營業人(401)</strong>：雖免繳納此項營業稅，但仍須在申報書內正確填寫「購買國外勞務」金額。<br>
+                        3. <strong>執行業務事務所、財團、社團法人(不屬於營業稅法第 36 條但書的免稅範圍)</strong>：需另外依法繳納「給付總額」× 5% 的購買國外勞務的營業稅(408)。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculate() {
+            const netAmount = parseFloat(document.getElementById('netAmount').value) || 0;
+            const profitRate = parseFloat(document.getElementById('profitRate').value) || 0;
+            const contributionRate = parseFloat(document.getElementById('contributionRate').value) || 0;
+            const payDateVal = document.getElementById('payDate').value;
+
+            // 1. 計算推算扣繳率 (法定扣繳率20% * 淨利率 * 貢獻度)
+            const taxRate = 0.2 * (profitRate / 100) * (contributionRate / 100);
+            document.getElementById('taxRateRes').innerText = (taxRate * 100).toFixed(2) + ' %';
+
+            // 2. 計算給付總額 (Gross-up)
+            let grossAmount = 0;
+            let taxAmount = 0;
+            
+            if (taxRate < 1) {
+                grossAmount = Math.round(netAmount / (1 - taxRate));
+                taxAmount = grossAmount - Math.round(netAmount);
+            }
+
+            document.getElementById('grossAmountRes').innerText = 'NT$ ' + grossAmount.toLocaleString();
+            document.getElementById('taxAmountRes').innerText = 'NT$ ' + taxAmount.toLocaleString();
+
+            // 3. 計算截止日期 (含給付當天起算 10 天)
+            if (payDateVal) {
+                const date = new Date(payDateVal);
+                date.setDate(date.getDate() + 9);
+                
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                document.getElementById('deadlineRes').innerText = `${y}/${m}/${d}`;
+            } else {
+                document.getElementById('deadlineRes').innerText = '請選擇日期';
+            }
+        }
+
+        window.onload = function() {
+            document.getElementById('payDate').value = "2026-01-01";
+            calculate();
+        };
+    </script>
+</body>
+</html>
